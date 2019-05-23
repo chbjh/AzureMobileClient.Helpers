@@ -188,7 +188,7 @@ namespace AzureMobileClient.Helpers.AzureActiveDirectory
                         _options.Authority,
                         _parent);
 
-                return authenticationResult.IdToken;
+                return authenticationResult.AccessToken;
             }
             catch (Exception ex)
             {
