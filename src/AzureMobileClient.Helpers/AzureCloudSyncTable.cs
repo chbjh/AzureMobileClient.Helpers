@@ -35,6 +35,42 @@ namespace AzureMobileClient.Helpers
         public long PendingOperations { get { return _client.SyncContext.PendingOperations; } }
 
         #region ICloudSyncTable interface
+
+        public Task PurgeAsync()
+        {
+            return table.PurgeAsync();
+        }
+
+        public Task PurgeAsync(bool force)
+        {
+            return table.PurgeAsync(force);
+        }
+
+        public Task PurgeAsync(string query)
+        {
+            return table.PurgeAsync(query);
+        }
+
+        public Task PurgeAsync(string queryId, string query, bool force, CancellationToken cancellationToken)
+        {
+            return table.PurgeAsync(queryId, query, force, cancellationToken);
+        }
+
+        public Task PurgeAsync<U>(IMobileServiceTableQuery<U> query)
+        {
+            return table.PurgeAsync<T, U>(query);
+        }
+
+        public Task PurgeAsync<U>(string queryId, IMobileServiceTableQuery<U> query, CancellationToken cancellationToken)
+        {
+            return table.PurgeAsync<U>(queryId, query, cancellationToken);
+        }
+
+        public Task PurgeAsync<U>(string queryId, IMobileServiceTableQuery<U> query, bool force, CancellationToken cancellationToken)
+        {
+            return table.PurgeAsync<U>(queryId, query, force, cancellationToken);
+        }
+
         /// <inheritDoc />
         public virtual async Task PullAsync()
         {
