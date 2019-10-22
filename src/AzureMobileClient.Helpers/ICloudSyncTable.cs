@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,8 @@ namespace AzureMobileClient.Helpers
         Task PurgeAsync<U>(string queryId, IMobileServiceTableQuery<U> query, CancellationToken cancellationToken);
         Task PurgeAsync<U>(string queryId, IMobileServiceTableQuery<U> query, bool force, CancellationToken cancellationToken);
 
+        Task PurgeItemAsync(T item);
+
         /// <summary>
         /// Pulls the latest data from the server and ensures proper syncing
         /// </summary>
@@ -35,5 +38,7 @@ namespace AzureMobileClient.Helpers
         /// Synchronize the table with the cloud store
         /// </summary>
         Task SyncAsync(CancellationToken cancellationToken = default(CancellationToken));
+
+        DateTimeOffset? LastSync { get; }
     }
 }

@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.MobileServices;
 using Microsoft.WindowsAzure.MobileServices.Sync;
+using Newtonsoft.Json.Linq;
 using Plugin.Connectivity;
 using Plugin.Connectivity.Abstractions;
 
@@ -17,7 +19,7 @@ namespace AzureMobileClient.Helpers
     public class AzureCloudSyncTable<T> : ICloudSyncTable<T> where T : EntityData
     {
         private IMobileServiceClient _client { get; }
-        private IMobileServiceSyncTable<T> table { get; }
+        public IMobileServiceSyncTable<T> table { get; }
 
         /// <summary>
         /// Initializes a new instance of <see cref="AzureCloudSyncTable(IMobileServiceClient)" />
@@ -26,7 +28,7 @@ namespace AzureMobileClient.Helpers
         {
             _client = client;
             table = _client.GetSyncTable<T>();
-            CrossConnectivity.Current.ConnectivityChanged += OnConnectivityChanged;
+            //CrossConnectivity.Current.ConnectivityChanged += OnConnectivityChanged;
         }
 
         /// <summary>
@@ -71,6 +73,16 @@ namespace AzureMobileClient.Helpers
             return table.PurgeAsync<U>(queryId, query, force, cancellationToken);
         }
 
+
+        public Task PurgeItemAsync(T item)
+        {
+            return this.PurgeAsync(this.table.Where(x => x.Id == item.Id));
+            //string queryName = $"purge_item_{typeof(T).Name}";
+            //var query = this.table.CreateQuery().Where(x => x.Id == item.Id);
+            //return this.PurgeAsync<T>(queryName, query, true, CancellationToken.None);
+        }
+        
+
         /// <inheritDoc />
         public virtual async Task PullAsync()
         {
@@ -82,10 +94,10 @@ namespace AzureMobileClient.Helpers
         public virtual async Task<T> CreateItemAsync(T item)
         {
             await table.InsertAsync(item);
-            if(_client.SyncContext.PendingOperations > 0 && CrossConnectivity.Current.IsConnected)
-            {
-                await _client.SyncContext.PushAsync();
-            }
+            //if(_client.SyncContext.PendingOperations > 0 && CrossConnectivity.Current.IsConnected)
+            //{
+            //    await _client.SyncContext.PushAsync();
+            //}
             return item;
         }
 
@@ -122,7 +134,31 @@ namespace AzureMobileClient.Helpers
             return item;
         }
 
-        private DateTimeOffset? LastSync;
+        public DateTimeOffset? LastSync { get; private set; }
+
+        async Task ResolveConflictAsync(MobileServiceTableOperationError error)
+        {
+            Debug.WriteLine("ResolveConflictAsync(): Going to allow Client to win.");
+
+            var serverItem = error.Result.ToObject<T>();
+            var localItem = error.Item.ToObject<T>();
+
+            // Note that you need to implement the public override Equals(TodoItem item)
+            // method in the Model for this to work
+            if (serverItem.Equals(localItem))
+            {
+                // Items are the same, so ignore the conflict
+                await error.CancelAndDiscardItemAsync();
+                return;
+            }
+
+            // Client Always Wins
+            localItem.Version = serverItem.Version;
+            await error.UpdateOperationAsync(JObject.FromObject(localItem));
+
+            // Server Always Wins
+            // await error.CancelAndDiscardItemAsync();
+        }
 
         /// <inheritDoc />
         public virtual async Task SyncAsync(CancellationToken cancellationToken = default(CancellationToken))
@@ -131,7 +167,21 @@ namespace AzureMobileClient.Helpers
 
             if(PendingOperations > 0)
             {
-                await _client.SyncContext.PushAsync(cancellationToken);
+                try
+                {
+                    await _client.SyncContext.PushAsync(cancellationToken);
+                }
+                catch (MobileServicePushFailedException ex)
+                {
+                    Debug.WriteLine("SyncAsync(): MobileServicePushFailedException hit.");
+                    if (ex.PushResult != null)
+                    {
+                        foreach (var error in ex.PushResult.Errors)
+                        {
+                            await ResolveConflictAsync(error);
+                        }
+                    }
+                }
             }
 
             await PullAsync();
