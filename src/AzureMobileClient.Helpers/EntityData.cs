@@ -17,6 +17,7 @@ namespace AzureMobileClient.Helpers
         private DateTimeOffset? _createdAt;
         private byte[] _version;
         private bool _deleted;
+        private bool _isModified;
 
         /// <inheritDoc />
         [JsonProperty("id")]
@@ -62,6 +63,13 @@ namespace AzureMobileClient.Helpers
             set { SetProperty(ref _deleted, value); }
         }
 
+        [JsonIgnore]
+        public bool IsModified
+        {
+            get { return _isModified; }
+            set { SetProperty(ref _isModified, value); }
+        }
+
         /// <summary>
         /// Sets the property.
         /// </summary>
@@ -94,8 +102,13 @@ namespace AzureMobileClient.Helpers
         /// Raises the property changed event.
         /// </summary>
         /// <param name="propertyName">Property name.</param>
-        protected virtual void RaisePropertyChanged([CallerMemberName]string propertyName = "") =>
+        protected virtual void RaisePropertyChanged([CallerMemberName] string propertyName = "")
+        {
+            if (propertyName != nameof(IsModified))
+                IsModified = true;
+
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         /// <inheritDoc />
         public override bool Equals(object obj)

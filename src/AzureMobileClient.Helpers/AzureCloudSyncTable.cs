@@ -106,26 +106,49 @@ namespace AzureMobileClient.Helpers
             => await table.DeleteAsync(item);
 
         /// <inheritDoc />
-        public virtual async Task<ICollection<T>> ReadAllItemsAsync() =>
-            await table.ToListAsync();
+        public virtual async Task<ICollection<T>> ReadAllItemsAsync()
+        {
+            var list = await table.ToListAsync();
+            foreach (T item in list)
+                item.IsModified = false;
+            return list;
+        }
 
         /// <inheritDoc />
         public virtual async Task<T> ReadItemAsync(string id)
-            => await table.LookupAsync(id);
+        {
+            var item = await table.LookupAsync(id);
+            if (item != null)
+                item.IsModified = false;
+            return item;
+        }
 
         /// <inheritDoc />
-        public virtual async Task<T> ReadItemAsync(Expression<System.Func<T, bool>> predicate) =>
-            (await table.Where(predicate).Take(1).ToListAsync()).FirstOrDefault();
+        public virtual async Task<T> ReadItemAsync(Expression<System.Func<T, bool>> predicate)
+        {
+            var item = (await table.Where(predicate).Take(1).ToListAsync()).FirstOrDefault();
+            if (item != null)
+                item.IsModified = false;
+            return item;
+        }
 
         /// <inheritDoc />
         public virtual async Task<ICollection<T>> ReadItemsAsync(int start, int count)
         {
-            return await table.Skip(start).Take(count).ToListAsync();
+            var list = await table.Skip(start).Take(count).ToListAsync();
+            foreach (T item in list)
+                item.IsModified = false;
+            return list;
         }
 
         /// <inheritDoc />
-        public virtual async Task<ICollection<T>> ReadItemsAsync(Expression<System.Func<T, bool>> predicate) =>
-            await table.Where(predicate).ToListAsync();
+        public virtual async Task<ICollection<T>> ReadItemsAsync(Expression<System.Func<T, bool>> predicate)
+        {
+            var list = await table.Where(predicate).ToListAsync();
+            foreach (T item in list)
+                item.IsModified = false;
+            return list;
+        }
 
         /// <inheritDoc />
         public virtual async Task<T> UpdateItemAsync(T item)
@@ -158,6 +181,30 @@ namespace AzureMobileClient.Helpers
 
             // Server Always Wins
             // await error.CancelAndDiscardItemAsync();
+        }
+
+        public virtual async Task PushOnlyAsync(CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (!CrossConnectivity.Current.IsConnected) return;
+
+            if (PendingOperations > 0)
+            {
+                try
+                {
+                    await _client.SyncContext.PushAsync(cancellationToken);
+                }
+                catch (MobileServicePushFailedException ex)
+                {
+                    Debug.WriteLine("SyncAsync(): MobileServicePushFailedException hit.");
+                    if (ex.PushResult != null)
+                    {
+                        foreach (var error in ex.PushResult.Errors)
+                        {
+                            await ResolveConflictAsync(error);
+                        }
+                    }
+                }
+            }
         }
 
         /// <inheritDoc />

@@ -38,6 +38,7 @@ namespace AzureMobileClient.Helpers
         /// Synchronize the table with the cloud store
         /// </summary>
         Task SyncAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task PushOnlyAsync(CancellationToken cancellationToken = default(CancellationToken));
 
         DateTimeOffset? LastSync { get; }
     }

@@ -31,5 +31,10 @@ namespace AzureMobileClient.Helpers
         /// Indicates whether the object was deleted
         /// </summary>
         bool Deleted { get; set; }
+
+        /// <summary>
+        /// Indicates whether the object has changed
+        /// </summary>
+        bool IsModified { get; set; }
     }
 }
