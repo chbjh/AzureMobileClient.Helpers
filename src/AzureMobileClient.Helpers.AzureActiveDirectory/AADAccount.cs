@@ -30,7 +30,8 @@ namespace AzureMobileClient.Helpers.AzureActiveDirectory
             AccessToken = jwt;
             foreach (var claim in new JwtSecurityToken(jwt).Claims)
             {
-                Add(claim.Type, claim.Value);
+                if (!ContainsKey(claim.Type))
+                    Add(claim.Type, claim.Value);
             }
         }
 
