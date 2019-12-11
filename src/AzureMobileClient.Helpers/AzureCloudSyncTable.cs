@@ -93,7 +93,7 @@ namespace AzureMobileClient.Helpers
             }
             catch (MobileServicePushFailedException ex)
             {
-                Debug.WriteLine("PullAsync(): MobileServicePushFailedException hit.");
+                Debug.WriteLine("PullAsync(): MobileServicePushFailedException hit. Message = " + ex.Message);
                 if (ex.PushResult != null)
                 {
                     foreach (var error in ex.PushResult.Errors)
@@ -210,7 +210,7 @@ namespace AzureMobileClient.Helpers
                 }
                 catch (MobileServicePushFailedException ex)
                 {
-                    Debug.WriteLine("SyncAsync(): MobileServicePushFailedException hit.");
+                    Debug.WriteLine("PushOnlyAsync(): MobileServicePushFailedException hit. Message = " + ex.Message);
                     if (ex.PushResult != null)
                     {
                         foreach (var error in ex.PushResult.Errors)
@@ -235,7 +235,7 @@ namespace AzureMobileClient.Helpers
                 }
                 catch (MobileServicePushFailedException ex)
                 {
-                    Debug.WriteLine("SyncAsync(): MobileServicePushFailedException hit.");
+                    Debug.WriteLine("SyncAsync(): MobileServicePushFailedException hit. Message = " + ex.Message);
                     if (ex.PushResult != null)
                     {
                         foreach (var error in ex.PushResult.Errors)
