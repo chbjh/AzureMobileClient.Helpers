@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -34,25 +36,12 @@ namespace AzureMobileClient.Helpers.Http
         /// <inheritDoc />
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            // Clone the request, in case we need to re-issue it
-            var clone = await request.CloneHttpRequestMessageAsync();
-            // Now do the request
-            var response = await base.SendAsync(request, cancellationToken);
+            var user = await _cloudService.LoginAsync();
 
-            if (response.StatusCode == HttpStatusCode.Unauthorized)
-            {
-                // The request resulted in a 401 Unauthorized.  We need to do a LoginAsync,
-                // which will do the Refresh if appropriate, or ask for credentials if not.
-                var user = await _cloudService.LoginAsync();
-
-                // Now, retry the request with the cloned request.  The only thing we have
-                // to do is replace the X-ZUMO-AUTH header with the new auth token.
-                clone.Headers.Remove(ZumoAuthHeader);
-                clone.Headers.Add(ZumoAuthHeader, user.MobileServiceClientToken);
-                response = await base.SendAsync(clone, cancellationToken);
-            }
-
-            return response;
+            request.Headers.Remove(ZumoAuthHeader);
+            request.Headers.Add(ZumoAuthHeader, user.MobileServiceClientToken);
+            
+            return await base.SendAsync(request, cancellationToken);
         }
     }
 }
