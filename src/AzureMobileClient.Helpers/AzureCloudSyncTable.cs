@@ -40,7 +40,8 @@ namespace AzureMobileClient.Helpers
 
         public Task PurgeAsync()
         {
-            return table.PurgeAsync();
+            string queryName = $"incsync_{typeof(T).Name}";
+            return table.PurgeAsync(queryName, null, true, CancellationToken.None);
         }
 
         public Task PurgeAsync(bool force)
