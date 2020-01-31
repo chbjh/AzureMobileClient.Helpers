@@ -87,10 +87,20 @@ namespace AzureMobileClient.Helpers
         /// <inheritDoc />
         public virtual async Task PullAsync()
         {
+            await PullAsync(null);
+        }
+
+        /// <inheritDoc />
+        public virtual async Task PullAsync(PullOptions pullOptions)
+        {
             try
             {
                 string queryName = $"incsync_{typeof(T).Name}";
-                await table.PullAsync(queryName, table.CreateQuery());
+
+                if (pullOptions == null)
+                    await table.PullAsync(queryName, table.CreateQuery());
+                else
+                    await table.PullAsync(queryName, table.CreateQuery(), pullOptions);
             }
             catch (MobileServicePushFailedException ex)
             {
@@ -103,7 +113,6 @@ namespace AzureMobileClient.Helpers
                     }
                 }
             }
-
         }
 
         /// <inheritDoc />

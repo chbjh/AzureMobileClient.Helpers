@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.WindowsAzure.MobileServices;
+using Microsoft.WindowsAzure.MobileServices.Sync;
 
 namespace AzureMobileClient.Helpers
 {
@@ -28,6 +29,11 @@ namespace AzureMobileClient.Helpers
         /// Pulls the latest data from the server and ensures proper syncing
         /// </summary>
         Task PullAsync();
+
+        /// <summary>
+        /// Pulls the latest data from the server and ensures proper syncing
+        /// </summary>
+        Task PullAsync(PullOptions pullOptions);
 
         /// <summary>
         /// Gets the count of any pending operations
