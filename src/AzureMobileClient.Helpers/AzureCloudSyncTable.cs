@@ -235,9 +235,15 @@ namespace AzureMobileClient.Helpers
         /// <inheritDoc />
         public virtual async Task SyncAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            if(!CrossConnectivity.Current.IsConnected) return;
+            await SyncAsync(null, cancellationToken);
+        }
 
-            if(PendingOperations > 0)
+        /// <inheritDoc />
+        public virtual async Task SyncAsync(PullOptions pullOptions, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (!CrossConnectivity.Current.IsConnected) return;
+
+            if (PendingOperations > 0)
             {
                 try
                 {
@@ -256,8 +262,11 @@ namespace AzureMobileClient.Helpers
                 }
             }
 
-            await PullAsync();
-
+            if (pullOptions == null)
+                await PullAsync();
+            else
+                await PullAsync(pullOptions);
+            
             LastSync = DateTimeOffset.Now;
         }
         #endregion
